@@ -1048,6 +1048,9 @@ void ActiveMQConnection::destroyDestination(const cms::Destination* destination)
 void ActiveMQConnection::onCommand(const Pointer<Command> command) {
 
     try {
+        if (closed.get() || closing.get()) {
+            return;
+        }
 
         if (command->isMessageDispatch()) {
 
@@ -1422,8 +1425,12 @@ void ActiveMQConnection::waitForTransportInterruptionProcessingToComplete() {
     Pointer<CountDownLatch> cdl = this->config->transportInterruptionProcessingComplete;
     if (cdl != NULL) {
 
+        int i = 0;
         while (!closed.get() && !transportFailed.get() && cdl->getCount() > 0) {
             cdl->await(10, TimeUnit::SECONDS);
+            if (i++ >= 4) {
+                throw CMSException("Aborting waitForTransportInterruptionProcessingToComplete, avoiding possible deadlock!");
+            }
         }
 
         signalInterruptionProcessingComplete();

@@ -60,7 +60,7 @@ namespace tcp {
         std::auto_ptr<decaf::io::DataInputStream> dataInputStream;
         std::auto_ptr<decaf::io::DataOutputStream> dataOutputStream;
 
-        const decaf::net::URI& location;
+        const decaf::net::URI location;
 
         int outputBufferSize;
         int inputBufferSize;
@@ -72,6 +72,8 @@ namespace tcp {
         int soReceiveBufferSize;
         int soSendBufferSize;
         bool tcpNoDelay;
+        int soTimeout;
+		int typeOfService;
 
         TcpTransportImpl(const decaf::net::URI& location) :
             connectTimeout(0),
@@ -86,9 +88,15 @@ namespace tcp {
             soKeepAlive(false),
             soReceiveBufferSize(-1),
             soSendBufferSize(-1),
-            tcpNoDelay(true) {
+            tcpNoDelay(true),
+            soTimeout(-1),
+			typeOfService(0) {
         }
     };
+
+    std::string TcpTransport::getRemoteAddress() const {
+        return this->impl->location.toString();
+    }
 }}}
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -168,6 +176,8 @@ void TcpTransport::connect() {
         int port = uri.getPort();
 
         impl->socket->connect(host, port, impl->connectTimeout);
+	impl->socket->setTrafficClass(this->impl->typeOfService);
+        impl->socket->setSoTimeout(this->impl->soTimeout);
 
         // Cast it to an IO transport so we can wire up the socket
         // input and output streams.
@@ -361,6 +371,26 @@ void TcpTransport::setTcpNoDelay(bool tcpNoDelay) {
 ////////////////////////////////////////////////////////////////////////////////
 bool TcpTransport::isTcpNoDelay() const {
     return this->impl->tcpNoDelay;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void TcpTransport::setSoTimeout(int soTimeout) {
+    this->impl->soTimeout = soTimeout;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+int TcpTransport::getSoTimeout() const {
+    return this->impl->soTimeout;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void TcpTransport::setTypeOfService(int typeOfService) {
+	this->impl->typeOfService = typeOfService;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+int TcpTransport::getTypeOfService() const {
+	return this->impl->typeOfService;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

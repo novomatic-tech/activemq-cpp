@@ -54,6 +54,7 @@ OpenSSLSocketException::OpenSSLSocketException( const char* file, const int line
     va_list vargs;
     va_start( vargs, msg );
     buildMessage( msg, vargs );
+    va_end(vargs);
 
     // Set the first mark for this exception.
     setMark( file, lineNumber );
@@ -73,6 +74,7 @@ OpenSSLSocketException::OpenSSLSocketException( const char* file, const int line
     va_list vargs ;
     va_start( vargs, msg );
     buildMessage( msg, vargs );
+    va_end(vargs);
 
     // Set the first mark for this exception.
     setMark( file, lineNumber );

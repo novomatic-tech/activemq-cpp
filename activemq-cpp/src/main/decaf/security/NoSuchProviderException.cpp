@@ -40,6 +40,7 @@ NoSuchProviderException::NoSuchProviderException(const char* file, const int lin
     va_list vargs;
     va_start(vargs, msg);
     buildMessage(msg, vargs);
+    va_end(vargs);
 
     // Set the first mark for this exception.
     setMark(file, lineNumber);
@@ -55,6 +56,7 @@ NoSuchProviderException::NoSuchProviderException(const char* file, const int lin
     va_list vargs;
     va_start(vargs, msg);
     buildMessage(msg, vargs);
+    va_end(vargs);
 
     // Set the first mark for this exception.
     setMark(file, lineNumber);

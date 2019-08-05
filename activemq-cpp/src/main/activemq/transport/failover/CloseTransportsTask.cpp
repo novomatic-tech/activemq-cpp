@@ -19,11 +19,15 @@
 
 #include <activemq/exceptions/ActiveMQException.h>
 
+#include <activemq/util/Logger.h>
+
 using namespace activemq;
 using namespace activemq::threads;
 using namespace activemq::exceptions;
 using namespace activemq::transport;
 using namespace activemq::transport::failover;
+using namespace activemq::util;
+using namespace LightBridge::Middleware::Logger;
 using namespace decaf;
 using namespace decaf::lang;
 using namespace decaf::util;
@@ -32,6 +36,8 @@ using namespace decaf::util::concurrent;
 ////////////////////////////////////////////////////////////////////////////////
 CloseTransportsTask::CloseTransportsTask() :
     transports() {
+    logCategories.push_back("activemq");
+    logCategories.push_back("failover");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -40,32 +46,42 @@ CloseTransportsTask::~CloseTransportsTask() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void CloseTransportsTask::add(const Pointer<Transport> transport) {
-    transports.put(transport);
+void CloseTransportsTask::add(Pointer<Transport>& transport) {
+    synchronized (&transports) {
+        transports.push(transport);
+        transport.reset(NULL);
+    };
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 bool CloseTransportsTask::isPending() const {
-    bool result = false;
-    result = !transports.isEmpty();
-    return result;
+    bool pending = false;
+    synchronized (&transports) {
+        pending = !transports.empty();
+    };
+    return pending;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 bool CloseTransportsTask::iterate() {
+    Pointer<Transport> transport;
+    synchronized (&transports) {
+         while (!transports.empty()) {
+             transport = transports.pop();
+             if (transport != NULL) {
 
-    if (!transports.isEmpty()) {
-        Pointer<Transport> transport = transports.take();
+                 try {
+                     Logger::log("Closing transport " + transport->getRemoteAddress(), LOG_SEV_DEBUG, logCategories);
+                     transport->close();
+                 }
+                 AMQ_CATCHALL_NOTHROW()
 
-        try {
-            transport->close();
-        }
-        AMQ_CATCHALL_NOTHROW()
-
-        transport.reset(NULL);
-
-        return !transports.isEmpty();
+                 transport.reset(NULL);
+             }
+         }
     }
 
-    return false;
+
+
+    return isPending();
 }

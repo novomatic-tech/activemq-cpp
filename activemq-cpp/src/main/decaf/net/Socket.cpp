@@ -581,7 +581,7 @@ void Socket::setSoTimeout( int timeout ) {
 
     checkClosed();
 
-    if( timeout < 0 ) {
+    if( timeout < -1 ) {
         throw IllegalArgumentException(
             __FILE__, __LINE__, "Socket timeout given was invalid: %d", timeout );
     }

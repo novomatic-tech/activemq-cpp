@@ -218,7 +218,9 @@ Pointer<Response> ResponseCorrelator::request(const Pointer<Command> command) {
         next->oneway(command);
 
         // Get the response.
-        response = futureResponse->getResponse();
+        // 10 sec timeout
+        // TODO: parametrize this timeout
+        response = futureResponse->getResponse(10000);
 
         if (response == NULL) {
             throw IOException(__FILE__, __LINE__,

@@ -465,7 +465,7 @@ void DataInputStream::readAllData(unsigned char* buffer, int length) {
         do {
             int count = inputStream->read(buffer, length, n, length - n);
             if (count == -1) {
-                throw EOFException(__FILE__, __LINE__, "DataInputStream::readLong - Reached EOF");
+                throw EOFException(__FILE__, __LINE__, "DataInputStream::readAllData - Reached EOF");
             }
             n += count;
         } while (n < length);

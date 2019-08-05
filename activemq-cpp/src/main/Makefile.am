@@ -156,7 +156,6 @@ cc_sources = \
     activemq/transport/TransportRegistry.cpp \
     activemq/transport/correlator/ResponseCorrelator.cpp \
     activemq/transport/failover/BackupTransport.cpp \
-    activemq/transport/failover/BackupTransportPool.cpp \
     activemq/transport/failover/CloseTransportsTask.cpp \
     activemq/transport/failover/FailoverTransport.cpp \
     activemq/transport/failover/FailoverTransportFactory.cpp \
@@ -193,6 +192,7 @@ cc_sources = \
     activemq/util/ServiceSupport.cpp \
     activemq/util/URISupport.cpp \
     activemq/util/Usage.cpp \
+	activemq/util/Logger.cpp \
     activemq/wireformat/MarshalAware.cpp \
     activemq/wireformat/WireFormat.cpp \
     activemq/wireformat/WireFormatFactory.cpp \
@@ -803,7 +803,6 @@ h_sources = \
     activemq/transport/TransportRegistry.h \
     activemq/transport/correlator/ResponseCorrelator.h \
     activemq/transport/failover/BackupTransport.h \
-    activemq/transport/failover/BackupTransportPool.h \
     activemq/transport/failover/CloseTransportsTask.h \
     activemq/transport/failover/FailoverTransport.h \
     activemq/transport/failover/FailoverTransportFactory.h \
@@ -841,6 +840,7 @@ h_sources = \
     activemq/util/ServiceSupport.h \
     activemq/util/URISupport.h \
     activemq/util/Usage.h \
+	activemq/util/Logger.h \
     activemq/wireformat/MarshalAware.h \
     activemq/wireformat/WireFormat.h \
     activemq/wireformat/WireFormatFactory.h \

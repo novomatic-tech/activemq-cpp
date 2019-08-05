@@ -19,6 +19,7 @@
 #define _ACTIVE_TRANSPORT_FAILOVER_FAILOVERTRANSPORT_H_
 
 #include <activemq/util/Config.h>
+#include <activemq/util/Logger.h>
 
 #include <activemq/commands/Command.h>
 #include <activemq/commands/ConnectionId.h>
@@ -40,9 +41,11 @@ namespace failover {
     using namespace decaf::lang;
     using activemq::commands::Command;
     using activemq::commands::Response;
+    using activemq::util::Logger;
+    using namespace LightBridge::Middleware::Logger;
 
     class FailoverTransportListener;
-    class BackupTransportPool;
+    class BackupTransport;
     class FailoverTransportImpl;
 
     class AMQCPP_API FailoverTransport : public CompositeTransport,
@@ -50,11 +53,12 @@ namespace failover {
     private:
 
         friend class FailoverTransportListener;
-        friend class BackupTransportPool;
+        friend class BackupTransport;
 
-        state::ConnectionStateTracker stateTracker;
+
 
         FailoverTransportImpl* impl;
+        std::vector<std::string> logCategories;
 
     private:
 
@@ -91,6 +95,8 @@ namespace failover {
         virtual void addURI(bool rebalance, const List<decaf::net::URI>& uris);
 
         virtual void removeURI(bool rebalance, const List<decaf::net::URI>& uris);
+
+        void removeBackup();
 
     public:
 
@@ -232,6 +238,10 @@ namespace failover {
 
         void setPriorityBackup(bool priorityBackup);
 
+        bool isAutoPriority() const;
+
+        void setAutoPriority(bool autoPriority);
+
         void setPriorityURIs(const std::string& priorityURIs);
 
         const decaf::util::List<decaf::net::URI>& getPriorityURIs() const;
@@ -285,6 +295,8 @@ namespace failover {
         void processNewTransports(bool rebalance, std::string newTransports);
 
         void processResponse(const Pointer<Response> response);
+
+        void forwardCommand(const Pointer<Command> command);
 
     };
 

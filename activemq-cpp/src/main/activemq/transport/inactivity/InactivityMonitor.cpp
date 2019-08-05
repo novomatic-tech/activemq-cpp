@@ -82,12 +82,15 @@ namespace inactivity {
 
         AtomicBoolean monitorStarted;
 
-        AtomicBoolean commandSent;
-        AtomicBoolean commandReceived;
-
         AtomicBoolean failed;
-        AtomicBoolean inRead;
-        AtomicBoolean inWrite;
+
+        Mutex lastReadMutex;
+        long long lastReadStartMillis;
+        long long lastReadStopMillis;
+
+        Mutex lastWriteMutex;
+        long long lastWriteStartMillis;
+        long long lastWriteStopMillis;
 
         Mutex inWriteMutex;
         Mutex monitor;
@@ -110,11 +113,13 @@ namespace inactivity {
             asyncReadTask(),
             asyncWriteTask(),
             monitorStarted(),
-            commandSent(),
-            commandReceived(true),
             failed(),
-            inRead(),
-            inWrite(),
+            lastReadMutex(),
+            lastReadStartMillis(0),
+            lastReadStopMillis(0),
+            lastWriteMutex(),
+            lastWriteStartMillis(0),
+            lastWriteStopMillis(0),
             inWriteMutex(),
             monitor(),
             readCheckTime(0),
@@ -312,8 +317,9 @@ void InactivityMonitor::onException(const decaf::lang::Exception& ex) {
 ////////////////////////////////////////////////////////////////////////////////
 void InactivityMonitor::onCommand(const Pointer<Command> command) {
 
-    this->members->commandReceived.set(true);
-    this->members->inRead.set(true);
+    synchronized (&this->members->lastReadMutex) {
+        this->members->lastReadStartMillis = System::currentTimeMillis();
+    }
 
     try {
 
@@ -331,10 +337,14 @@ void InactivityMonitor::onCommand(const Pointer<Command> command) {
 
         TransportFilter::onCommand(command);
 
-        this->members->inRead.set(false);
+        synchronized (&this->members->lastReadMutex) {
+            this->members->lastReadStopMillis = System::currentTimeMillis();
+        }
 
     } catch (Exception& ex) {
-        this->members->inRead.set(false);
+        synchronized (&this->members->lastReadMutex) {
+            this->members->lastReadStopMillis = System::currentTimeMillis();
+        }
         ex.setMark(__FILE__, __LINE__);
         throw;
     }
@@ -348,7 +358,9 @@ void InactivityMonitor::oneway(const Pointer<Command> command) {
         // method - its not synchronized further down the transport stack and gets called
         // by more than one thread  by this class
         synchronized(&this->members->inWriteMutex) {
-            this->members->inWrite.set(true);
+            synchronized (&this->members->lastWriteMutex) {
+                this->members->lastWriteStartMillis = System::currentTimeMillis();
+            }
             try {
 
                 if (this->members->failed.get()) {
@@ -365,12 +377,13 @@ void InactivityMonitor::oneway(const Pointer<Command> command) {
 
                 this->next->oneway(command);
 
-                this->members->commandSent.set(true);
-                this->members->inWrite.set(false);
-
+                synchronized (&this->members->lastWriteMutex) {
+                    this->members->lastWriteStopMillis = System::currentTimeMillis();
+                }
             } catch (Exception& ex) {
-                this->members->commandSent.set(true);
-                this->members->inWrite.set(false);
+                synchronized (&this->members->lastWriteMutex) {
+                    this->members->lastWriteStopMillis = System::currentTimeMillis();
+                }
                 ex.setMark(__FILE__, __LINE__);
                 throw;
             }
@@ -390,33 +403,46 @@ bool InactivityMonitor::allowReadCheck(long long elapsed) {
 ////////////////////////////////////////////////////////////////////////////////
 void InactivityMonitor::readCheck() {
 
-    if (this->members->inRead.get() || this->members->wireFormat->inReceive()) {
-        return;
-    }
+    synchronized(&this->members->monitor) {
+        if (this->members->monitorStarted.get()) {
+            long long lastStart;
+            long long lastStop;
+            synchronized (&this->members->lastReadMutex) {
+                lastStart = this->members->lastReadStartMillis;
+                lastStop = this->members->lastReadStopMillis;
+            }
+            long long current = System::currentTimeMillis();
+            long long lastReadActivity = std::max(lastStart, lastStop);
 
-    if (!this->members->commandReceived.get()) {
-        // Set the failed state on our async Read Failure Task and wakeup its runner.
-        this->members->asyncReadTask->setFailed(true);
-        this->members->asyncTasks->wakeup();
+            if (current > lastReadActivity + this->members->readCheckTime) {
+                // Set the failed state on our async Read Failure Task and wakeup its runner.
+                this->members->asyncReadTask->setFailed(true);
+                this->members->asyncTasks->wakeup();
+            }
+        }
     }
-
-    this->members->commandReceived.set(false);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 void InactivityMonitor::writeCheck() {
 
-    if (this->members->inWrite.get()) {
-        return;
+    synchronized(&this->members->monitor) {
+        if (this->members->monitorStarted.get()) {
+            long long lastStart;
+            long long lastStop;
+            synchronized (&this->members->lastWriteMutex) {
+                lastStart = this->members->lastWriteStartMillis;
+                lastStop = this->members->lastWriteStopMillis;
+            }
+            long long current = System::currentTimeMillis();
+            long long lastWriteActivity = std::max(lastStart, lastStop);
+
+            if (current > lastWriteActivity + this->members->writeCheckTime) {
+                this->members->asyncWriteTask->setWrite(true);
+                this->members->asyncTasks->wakeup();
+            }
+        }
     }
-
-    if (!this->members->commandSent.get()) {
-
-        this->members->asyncWriteTask->setWrite(true);
-        this->members->asyncTasks->wakeup();
-    }
-
-    this->members->commandSent.set(false);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

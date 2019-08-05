@@ -20,6 +20,10 @@
 
 #include <activemq/util/Config.h>
 
+namespace LightBridge { namespace Middleware { namespace Logger {
+    class ILogger;
+}}}
+
 namespace activemq {
 namespace library {
 
@@ -64,6 +68,11 @@ namespace library {
          * destroyed by the time this method is called.
          */
         static void shutdownLibrary();
+
+        /**
+         * Sets logger for ActiveMQ-CPP Library.
+         */
+        static void setLogger(LightBridge::Middleware::Logger::ILogger* logger);
 
     private:
 

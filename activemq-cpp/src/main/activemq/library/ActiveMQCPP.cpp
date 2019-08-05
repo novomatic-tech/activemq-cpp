@@ -30,6 +30,7 @@
 #include <activemq/transport/tcp/TcpTransportFactory.h>
 #include <activemq/transport/tcp/SslTransportFactory.h>
 #include <activemq/transport/failover/FailoverTransportFactory.h>
+#include <activemq/util/Logger.h>
 
 using namespace activemq;
 using namespace activemq::library;
@@ -82,6 +83,11 @@ void ActiveMQCPP::shutdownLibrary() {
 
     // Now it should be safe to shutdown Decaf.
     decaf::lang::Runtime::shutdownRuntime();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void ActiveMQCPP::setLogger(LightBridge::Middleware::Logger::ILogger* logger) {
+    activemq::util::Logger::initialize(logger);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

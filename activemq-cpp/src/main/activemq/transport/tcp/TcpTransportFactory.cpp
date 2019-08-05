@@ -137,6 +137,8 @@ void TcpTransportFactory::doConfigureTransport(Pointer<Transport> transport,
         tcp->setSendBufferSize(Integer::parseInt(properties.getProperty("soSendBufferSize", "-1")));
         tcp->setTcpNoDelay(Boolean::parseBoolean(properties.getProperty("tcpNoDelay", "true")));
         tcp->setConnectTimeout(Integer::parseInt(properties.getProperty("soConnectTimeout", "0")));
+        tcp->setSoTimeout(Integer::parseInt(properties.getProperty("soTimeout", "-1")));
+		tcp->setTypeOfService(Integer::parseInt(properties.getProperty("typeOfService","0")));
     }
     AMQ_CATCH_RETHROW(ActiveMQException)
     AMQ_CATCH_EXCEPTION_CONVERT(Exception, ActiveMQException)

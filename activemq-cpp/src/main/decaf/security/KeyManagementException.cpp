@@ -40,6 +40,7 @@ KeyManagementException::KeyManagementException(const char* file, const int lineN
     va_list vargs;
     va_start(vargs, msg);
     buildMessage(msg, vargs);
+    va_end(vargs);
 
     // Set the first mark for this exception.
     setMark(file, lineNumber);
@@ -55,6 +56,7 @@ KeyManagementException::KeyManagementException(const char* file, const int lineN
     va_list vargs;
     va_start(vargs, msg);
     buildMessage(msg, vargs);
+    va_end(vargs);
 
     // Set the first mark for this exception.
     setMark(file, lineNumber);

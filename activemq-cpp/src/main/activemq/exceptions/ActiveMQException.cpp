@@ -48,6 +48,7 @@ ActiveMQException::ActiveMQException(const char* file, const int lineNumber, con
     va_list vargs;
     va_start(vargs, msg);
     buildMessage(msg, vargs);
+    va_end(vargs);
 
     // Set the first mark for this exception.
     Exception::setMark(file, lineNumber);
@@ -60,6 +61,7 @@ ActiveMQException::ActiveMQException(const char* file, const int lineNumber, con
     va_list vargs;
     va_start(vargs, msg);
     buildMessage(msg, vargs);
+    va_end(vargs);
 
     // Set the first mark for this exception.
     Exception::setMark(file, lineNumber);

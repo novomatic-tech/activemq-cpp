@@ -17,27 +17,38 @@
 
 #include "BackupTransport.h"
 
-#include <activemq/transport/failover/BackupTransportPool.h>
 
 using namespace activemq;
 using namespace activemq::transport;
 using namespace activemq::transport::failover;
 
 ////////////////////////////////////////////////////////////////////////////////
-BackupTransport::BackupTransport(BackupTransportPool* parent) :
+BackupTransport::BackupTransport(FailoverTransport* parent) :
     parent(parent), transport(), uri(), closed(true), priority(false) {
+    logCategories.push_back("activemq");
+    logCategories.push_back("failover");
+    logCategories.push_back("backup");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 BackupTransport::~BackupTransport() {
+    dispose();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void BackupTransport::onException(const decaf::lang::Exception& ex AMQCPP_UNUSED) {
+void BackupTransport::onException(const decaf::lang::Exception& ex) {
+    FailoverTransport* p = NULL;
+    synchronized(&mutex) {
+        this->closed = true;
 
-    this->closed = true;
+        Logger::log("Backup transport error: " + ex.getMessage(), LOG_SEV_DEBUG, logCategories);
 
-    if (this->parent != NULL) {
-        this->parent->onBackupTransportFailure(this);
+        if (this->parent != NULL) {
+            p = this->parent;
+        }
+    }
+
+    if (p != NULL) {
+        p->removeBackup();
     }
 }

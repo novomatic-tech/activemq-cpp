@@ -1140,7 +1140,7 @@ void ActiveMQSessionKernel::createTemporaryDestination(commands::ActiveMQTempDes
         command->setDestination(Pointer<ActiveMQTempDestination> (tempDestination->cloneDataStructure()));
 
         // Send the message to the broker.
-        this->syncRequest(command);
+        this->syncRequest(command, this->connection->getSendTimeout());
 
         // Now that its setup, link it to this Connection so it can be closed.
         tempDestination->setConnection(this->connection);

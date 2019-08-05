@@ -49,6 +49,7 @@ IndexOutOfBoundsException::IndexOutOfBoundsException(const char* file, const int
     va_list vargs;
     va_start(vargs, msg);
     buildMessage(msg, vargs);
+    va_end(vargs);
 
     // Set the first mark for this exception.
     setMark(file, lineNumber);
@@ -60,6 +61,7 @@ IndexOutOfBoundsException::IndexOutOfBoundsException(const char* file, const int
     va_list vargs;
     va_start(vargs, msg);
     buildMessage(msg, vargs);
+    va_end(vargs);
 
     // Set the first mark for this exception.
     setMark(file, lineNumber);

@@ -21,6 +21,9 @@
 #include <activemq/util/Config.h>
 #include <activemq/transport/TransportListener.h>
 #include <decaf/lang/Pointer.h>
+#include <decaf/util/concurrent/Mutex.h>
+
+using namespace decaf::util::concurrent;
 
 namespace activemq {
 namespace transport {
@@ -37,6 +40,7 @@ namespace failover {
     class AMQCPP_API FailoverTransportListener: public TransportListener {
     private:
 
+        Mutex parentMutex;
         // The Transport that created this listener
         FailoverTransport* parent;
 
@@ -78,6 +82,9 @@ namespace failover {
          */
         virtual void transportResumed();
 
+
+    public:
+        void dispose();
     };
 
 }}}

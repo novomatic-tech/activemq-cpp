@@ -73,6 +73,12 @@ namespace tcp {
         void setConnectTimeout(int soConnectTimeout);
         int getConnectTimeout() const;
 
+        void setSoTimeout(int soTimeout);
+        int getSoTimeout() const;
+
+		void setTypeOfService(int typeOfService);
+		int getTypeOfService() const;
+
         void setOutputBufferSize(int outputBufferSize);
         int getOutputBufferSize() const;
 
@@ -104,6 +110,9 @@ namespace tcp {
         }
 
         virtual bool isConnected() const;
+
+
+        virtual std::string getRemoteAddress() const override;
 
     protected:
 

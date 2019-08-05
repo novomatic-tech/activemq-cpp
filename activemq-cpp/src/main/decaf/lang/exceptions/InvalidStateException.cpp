@@ -49,6 +49,7 @@ InvalidStateException::InvalidStateException(const char* file, const int lineNum
     va_list vargs;
     va_start(vargs, msg);
     buildMessage(msg, vargs);
+    va_end(vargs);
 
     // Set the first mark for this exception.
     setMark(file, lineNumber);
@@ -60,6 +61,7 @@ InvalidStateException::InvalidStateException(const char* file, const int lineNum
     va_list vargs;
     va_start(vargs, msg);
     buildMessage(msg, vargs);
+    va_end(vargs);
 
     // Set the first mark for this exception.
     setMark(file, lineNumber);

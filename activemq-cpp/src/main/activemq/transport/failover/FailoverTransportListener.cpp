@@ -50,45 +50,63 @@ void FailoverTransportListener::onCommand(const Pointer<Command> command) {
         return;
     }
 
-    if (command->isResponse()) {
-        Pointer<Response> response = command.dynamicCast<Response>();
-        parent->processResponse(response);
-    }
+    synchronized (&parentMutex) {
+        if (parent == NULL)
+            return;
 
-    if (!parent->isInitialized()) {
-        parent->setInitialized(true);
-    }
+        if (command->isResponse()) {
+            Pointer<Response> response = command.dynamicCast<Response>();
+            parent->processResponse(response);
+        }
 
-    if (command->isConnectionControl()) {
-        parent->handleConnectionControl(command);
-    }
+        if (!parent->isInitialized()) {
+            parent->setInitialized(true);
+        }
 
-    if (parent->getTransportListener() != NULL) {
-        parent->getTransportListener()->onCommand(command);
+        if (command->isConnectionControl()) {
+            parent->handleConnectionControl(command);
+        }
+
+        parent->forwardCommand(command);
     }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 void FailoverTransportListener::onException(const decaf::lang::Exception& ex) {
-    try {
-        parent->handleTransportFailure(ex);
-    } catch (Exception& e) {
-        if (parent->getTransportListener() != NULL) {
-            parent->getTransportListener()->onException(e);
+    synchronized (&parentMutex) {
+        if (parent == NULL)
+            return;
+
+        try {
+            parent->handleTransportFailure(ex);
+        } catch (Exception &e) {
+            if (parent->getTransportListener() != NULL) {
+                parent->getTransportListener()->onException(e);
+            }
         }
     }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 void FailoverTransportListener::transportInterrupted() {
-    if (parent->getTransportListener() != NULL) {
-        parent->getTransportListener()->transportInterrupted();
+    synchronized (&parentMutex) {
+        if (parent != NULL && parent->getTransportListener() != NULL) {
+            parent->getTransportListener()->transportInterrupted();
+        }
     }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 void FailoverTransportListener::transportResumed() {
-    if (parent->getTransportListener() != NULL) {
-        parent->getTransportListener()->transportResumed();
+    synchronized (&parentMutex) {
+        if (parent != NULL && parent->getTransportListener() != NULL) {
+            parent->getTransportListener()->transportResumed();
+        }
+    }
+}
+
+void FailoverTransportListener::dispose() {
+    synchronized(&parentMutex) {
+        parent = NULL;
     }
 }

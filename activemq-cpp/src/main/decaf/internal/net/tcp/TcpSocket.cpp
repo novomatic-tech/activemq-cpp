@@ -588,7 +588,9 @@ void TcpSocket::setOption(int option, int value) {
         apr_int32_t aprId = 0;
 
         if (option == SocketOptions::SOCKET_OPTION_TIMEOUT) {
-            checkResult(apr_socket_opt_set(impl->socketHandle, APR_SO_NONBLOCK, 0));
+            if (value >= 0) {
+                checkResult(apr_socket_opt_set(impl->socketHandle, APR_SO_NONBLOCK, 0));
+            }
             // Time in APR for sockets is in microseconds so multiply by 1000.
             checkResult(apr_socket_timeout_set(impl->socketHandle, value * 1000));
             this->impl->soTimeout = value;
@@ -602,7 +604,13 @@ void TcpSocket::setOption(int option, int value) {
             value = value <= 0 ? 0 : 1;
             checkResult(apr_socket_opt_set(impl->socketHandle, APR_SO_LINGER, (apr_int32_t) value));
             return;
-        }
+		}
+		else if (option == SocketOptions::SOCKET_OPTION_IP_TOS)
+		{
+            if (value != 0)
+                checkResult(apr_socket_opt_set(impl->socketHandle, APR_IP_TOS, (apr_int32_t)value));
+			return;
+		}
 
         if (option == SocketOptions::SOCKET_OPTION_REUSEADDR) {
             aprId = APR_SO_REUSEADDR;

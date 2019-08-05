@@ -18,27 +18,29 @@
 #ifndef _ACTIVE_TRANSPORT_FAILOVER_BACKUPTRANSPORT_H_
 #define _ACTIVE_TRANSPORT_FAILOVER_BACKUPTRANSPORT_H_
 
+#include <decaf/util/concurrent/Mutex.h>
 #include <activemq/util/Config.h>
-
 #include <activemq/transport/Transport.h>
 #include <activemq/transport/DefaultTransportListener.h>
 #include <decaf/net/URI.h>
 #include <decaf/lang/Pointer.h>
 #include <memory>
+#include "FailoverTransport.h"
 
 namespace activemq {
 namespace transport {
 namespace failover {
 
     using decaf::lang::Pointer;
-
-    class BackupTransportPool;
+    using decaf::util::concurrent::Mutex;
 
     class AMQCPP_API BackupTransport : public DefaultTransportListener {
     private:
 
+        Mutex mutex;
+
         // The parent of this Backup
-        BackupTransportPool* parent;
+        FailoverTransport* parent;
 
         // The Transport this one is managing.
         Pointer<Transport> transport;
@@ -52,6 +54,8 @@ namespace failover {
         // Is this Transport one of the priority backups.
         bool priority;
 
+        std::vector<std::string> logCategories;
+
     private:
 
         BackupTransport(const BackupTransport&);
@@ -59,7 +63,7 @@ namespace failover {
 
     public:
 
-        BackupTransport(BackupTransportPool* failover);
+        BackupTransport(FailoverTransport* failover = NULL);
 
         virtual ~BackupTransport();
 
@@ -83,7 +87,9 @@ namespace failover {
          * @returns pointer to the held transport or NULL if not set.
          */
         const Pointer<Transport>& getTransport() {
-            return transport;
+            synchronized(&mutex) {
+                return transport;
+            }
         }
 
         /**
@@ -94,10 +100,13 @@ namespace failover {
          *        The transport to hold.
          */
         void setTransport(const Pointer<Transport> transport) {
-            this->transport = transport;
+            synchronized(&mutex) {
+                this->transport = transport;
 
-            if (this->transport != NULL) {
-                this->transport->setTransportListener(this);
+                if (this->transport != NULL) {
+                    this->transport->setTransportListener(this);
+                    setClosed(false);
+                }
             }
         }
 
@@ -144,6 +153,17 @@ namespace failover {
          */
         void setPriority(bool value) {
             this->priority = value;
+        }
+
+        void dispose() {
+            synchronized(&mutex) {
+                closed = true;
+                this->parent = NULL;
+                if (transport != NULL) {
+                    transport->setTransportListener(NULL);
+                    transport.reset(NULL);
+                }
+            }
         }
     };
 

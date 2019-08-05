@@ -108,6 +108,8 @@ Pointer<Transport> FailoverTransportFactory::doCreateComposite(const decaf::net:
             Boolean::parseBoolean(topLvlProperties.getProperty("updateURIsSupported", "true")));
         transport->setPriorityBackup(
             Boolean::parseBoolean(topLvlProperties.getProperty("priorityBackup", "false")));
+        transport->setAutoPriority(
+                Boolean::parseBoolean(topLvlProperties.getProperty("autoPriority", "false")));
         transport->setPriorityURIs(topLvlProperties.getProperty("priorityURIs", ""));
 
         transport->addURI(false, data.getComponents());
